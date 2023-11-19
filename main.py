@@ -63,8 +63,8 @@ def show_labels():
     label_header.pack()
     label_main.pack()
 
-def make_main_label(data:str):
-    label = tk.Label(window,text =data, font=("Arial",12),justify="center", wraplength=700)
+def make_label(data:str):
+    label = tk.Label(window,text =data, font=("Arial",12),justify="left", wraplength=700)
     return label
 
 window = tk.Tk()
