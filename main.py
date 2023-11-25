@@ -1,16 +1,26 @@
+import clipboard
 import json
 import tkinter as tk
+import sys
+from tkinter import messagebox
+
 #import UI as ui
 
 ALARMS_FILE = "alarms.json"
 FILE_PATH = "C:/Users/mzigdon/Documents/logs/hdmtOScommon-3.log"
+IMG_PATH ="./assetes/Intel_logo_PNG5.png"
+
+
+
 
 def loading_errors_to_search()->list:
     with open(ALARMS_FILE,'r') as json_file:
         data = json.load(json_file)
-        alarms_list = data['errors']
-        alarms_list = [word.lower() for word in alarms_list]
-        return alarms_list
+    json_file.close()
+    alarms_list = data['errors']
+    alarms_list = [word.lower() for word in alarms_list]
+    json_file.close()
+    return alarms_list
 
 def loading_log()->list:
     try:
@@ -36,58 +46,145 @@ def find_errors_in_log(file_content:list, alarms_list)->str:
         count += 1
 
     #looking up for any alarms in file
-    output: str = ""
+    output: dict={}
     number = ''
     for alarm in alarms_list:
         curr_line = []
-        output += " \nkey word: " + alarm + "\n"
+        output['key word: '+alarm]=["\n"]
         for key, value in lines_dict.items():
             if alarm in value:
                 number = line_number[key].rsplit(',', 1)
                 number = number[-1]
                 if number not in curr_line:
-                    output += number
-                    output += " --------------"
-                    output += lines_dict[key]
-                    output += "\n"
+                    output['key word: '+alarm].append(number+" --------------"+lines_dict[key]+"\n")
                     curr_line.append(number)
 
     return output
 
-file_content = loading_log()
-alarms_list = loading_errors_to_search()
-output = find_errors_in_log(file_content, alarms_list)
+
+
+def loading_errors():
+    file_content = loading_log()
+    alarms_list = loading_errors_to_search()
+    global output
+    output = find_errors_in_log(file_content, alarms_list)
+
 
 #GUI
 def show_labels():
-    label_header.pack()
+    loading_errors()
+    for widget in window.winfo_children():
+        widget.pack_forget()
+    label_header = tk.Label(window, text="Errors Found In Log Are:", font=("Arial", 16))
+    text_widget = tk.Text(window, wrap="word", height=45, width=110)
+    text_widget.tag_configure("big", font=("Arial", 14))
+    text_widget.tag_configure("small", font=("Arial", 12))
+    for key, value in output.items():
+        text_widget.insert(tk.END, key, "big")
+        for item in value:
+            text_widget.insert(tk.END, item, "small")
+    button3 = tk.Button(window, text="Copy To clipBoard ", command=copy_to_clipBoard,height=2,width=20)
+    button4 = tk.Button(window, text="Back",command=menu,height=2,width=6)
+    label_header.pack(pady=10)
     text_widget.pack(pady=10)
+    button3.pack(side=tk.LEFT,padx=180)
+    button4.pack(side=tk.RIGHT,padx=175)
 
-    #label_main.pack()
+def add_search_word():
+    for widget in window.winfo_children():
+        widget.pack_forget()
+    button4 = tk.Button(window, text="Add", command=get_entry_text,height=2,width=8)
+    button5 = tk.Button(window, text="New Search", command=show_labels,height=2,width=8)
+    if not entry.winfo_ismapped() and not button4.winfo_ismapped() and not button5.winfo_ismapped():
+        entry.pack(pady=(200,10),padx=(0,50))
+        button4.pack(side=tk.LEFT, pady=(0, 600), padx=(350, 0))
+        button5.pack(side=tk.LEFT, pady=(0, 600), padx=(20, 0))
+    button4 = tk.Button(window, text="Back", command=menu,height=1,width=5)
+    button4.pack(side=tk.RIGHT, padx=50,pady=(0,300))
+
+
+def copy_to_clipBoard():
+    str_output = ""
+    for key,value in output.items():
+        str_output+=key
+        for item in value:
+            str_output+=item
+            str_output+="\n"
+    clipboard.copy(str_output)
+
+def get_entry_text():
+    entered_text = entry.get()
+    with open(ALARMS_FILE, 'r') as json_file:
+        data = json.load(json_file)
+    json_file.close()
+    alarm_list = loading_errors_to_search()
+    if not entered_text:
+        messagebox.showinfo("massage", "Please Enter A Search Word")
+        return
+    if entered_text.lower() in alarm_list:
+        messagebox.showinfo("massage","This Search Word Is Already Exist")
+        return
+    else:
+        data['errors'].append(entered_text)
+        updated_json = json.dumps(data)
+        with open(ALARMS_FILE, 'w') as json_file_w:
+            json_file_w.write(updated_json)
+
+def menu():
+    for widget in window.winfo_children():
+        widget.pack_forget()
+    button.pack(padx=20, pady=(150, 0))
+    button2.pack(side=tk.LEFT, pady=(0, 600), padx=(290, 0))
+    button3.pack(side=tk.LEFT, pady=(0, 600), padx=(20, 0))
+
+
+def remove_search_word():
+    for widget in window.winfo_children():
+        widget.pack_forget()
+    entry.pack(pady=(200, 15))
+    button = tk.Button(window, text="Delete", command=delete,height=2,width=8)
+    button.pack()
+    button4 = tk.Button(window, text="Back", command=menu,height=1,width=5)
+    button4.pack(side=tk.RIGHT, padx=50,pady=(0,300))
+
+
+def delete():
+    entered_text = entry.get()
+    entered_text = entered_text.lower()
+    with open(ALARMS_FILE, 'r') as json_file:
+        data = json.load(json_file)
+    json_file.close()
+    alarm_list = loading_errors_to_search()
+    if not entered_text:
+        messagebox.showinfo("massage", "Please Enter A Search Word")
+        return
+    if entered_text.lower() not in alarm_list:
+        messagebox.showinfo("massage", "Search Word Dont Exist")
+        return
+    data['errors'] = [item for item in data['errors']if item.lower() != entered_text]
+    updated_json = json.dumps(data)
+    with open(ALARMS_FILE, 'w') as json_file_w:
+        json_file_w.write(updated_json)
+    messagebox.showinfo("massage", "key word Deleted Succesfully")
 
 
 
-    #label = tk.Label(window,text =data, font=("Arial",12),justify="left", wraplength=700)
+
 
 window = tk.Tk()
-text_widget = tk.Text(window, wrap="word", height=30, width=60)
-text_widget.tag_configure("big", font=("Arial", 14))
-text_widget.tag_configure("small", font=("Arial", 8))
-for word in output:
-    text_widget.insert(tk.END, word, "big")
-    text_widget.insert(tk.END, word, "small")
-window.geometry("800x900")
+bg_image = tk.PhotoImage(file=IMG_PATH)
+resized_image = bg_image.subsample(10, 10)
+bg_label = tk.Label(window, image=resized_image,bg="#78b9fa")
+bg_label.place(relx=0.25, rely=0.4, relwidth=0.5, relheight=0.5)
+entry = tk.Entry(window,width=35)
+window.geometry("900x900")
 window.title("ErorrsFinder")
-window.configure(bg='lightblue')
+window.configure(bg="#78b9fa")
 window.iconbitmap('./assetes/logo.ico')
-button = tk.Button(window, text="Start",command=show_labels)
-
-label_header = tk.Label(window, text="errors found in log are:", font=("Arial",16))
-
-
-
-button.pack(padx=20,pady=80)
-#label_main = make_label(output)
+button = tk.Button(window, text="Start",command=show_labels,height=2,width=20)
+button2 = tk.Button(window, text="Add A New Search Word", command= add_search_word,height=2,width=20)
+button3 = tk.Button(window, text="Remove A Search Word", command= remove_search_word,height=2,width=20)
+menu()
 
 window.mainloop()
 
