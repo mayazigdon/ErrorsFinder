@@ -3,15 +3,11 @@ import json
 import tkinter as tk
 import sys
 from tkinter import messagebox
-
-#import UI as ui
+from tkinter import font as tkFont
 
 ALARMS_FILE = "alarms.json"
 FILE_PATH = "C:/Users/mzigdon/Documents/logs/hdmtOScommon-3.log"
 IMG_PATH ="./assetes/Intel_logo_PNG5.png"
-
-
-
 
 def loading_errors_to_search()->list:
     with open(ALARMS_FILE,'r') as json_file:
@@ -61,8 +57,6 @@ def find_errors_in_log(file_content:list, alarms_list)->str:
 
     return output
 
-
-
 def loading_errors():
     file_content = loading_log()
     alarms_list = loading_errors_to_search()
@@ -76,31 +70,31 @@ def show_labels():
     for widget in window.winfo_children():
         widget.pack_forget()
     label_header = tk.Label(window, text="Errors Found In Log Are:", font=("Arial", 16))
-    text_widget = tk.Text(window, wrap="word", height=45, width=110)
+    text_widget = tk.Text(window, wrap="word", height=28, width=110)
     text_widget.tag_configure("big", font=("Arial", 14))
     text_widget.tag_configure("small", font=("Arial", 12))
     for key, value in output.items():
         text_widget.insert(tk.END, key, "big")
         for item in value:
             text_widget.insert(tk.END, item, "small")
-    button3 = tk.Button(window, text="Copy To clipBoard ", command=copy_to_clipBoard,height=2,width=20)
-    button4 = tk.Button(window, text="Back",command=menu,height=2,width=6)
+    button = tk.Button(window, text="Copy To clipBoard ", command=copy_to_clipBoard,height=2,width=20)
+    button1 = tk.Button(window, text="Back",command=menu,height=2,width=6)
     label_header.pack(pady=10)
     text_widget.pack(pady=10)
-    button3.pack(side=tk.LEFT,padx=180)
-    button4.pack(side=tk.RIGHT,padx=175)
+    button.pack(side=tk.LEFT,padx=180)
+    button1.pack(side=tk.LEFT,padx=80)
 
 def add_search_word():
+    entry = tk.Entry(window, width=35)
     for widget in window.winfo_children():
         widget.pack_forget()
-    button4 = tk.Button(window, text="Add", command=get_entry_text,height=2,width=8)
-    button5 = tk.Button(window, text="New Search", command=show_labels,height=2,width=8)
-    if not entry.winfo_ismapped() and not button4.winfo_ismapped() and not button5.winfo_ismapped():
-        entry.pack(pady=(200,10),padx=(0,50))
-        button4.pack(side=tk.LEFT, pady=(0, 600), padx=(350, 0))
-        button5.pack(side=tk.LEFT, pady=(0, 600), padx=(20, 0))
-    button4 = tk.Button(window, text="Back", command=menu,height=1,width=5)
-    button4.pack(side=tk.RIGHT, padx=50,pady=(0,300))
+    button = tk.Button(window, text="Add", command=get_entry_text,height=2,width=8)
+    button1 = tk.Button(window, text="New Search", command=show_labels,height=2,width=8)
+    entry.pack(pady=(200,10),padx=(0,30))
+    button.pack(side=tk.LEFT, pady=(0, 300), padx=(305, 0))
+    button1.pack(side=tk.LEFT, pady=(0, 300), padx=(20, 0))
+    button2 = tk.Button(window, text="Back", command=menu,height=1,width=5)
+    button2.pack(side=tk.RIGHT, padx=50,pady=(0,100))
 
 
 def copy_to_clipBoard():
@@ -131,21 +125,28 @@ def get_entry_text():
             json_file_w.write(updated_json)
 
 def menu():
+    button = tk.Button(window, text="Start", command=show_labels, height=2, width=20)
+    button2 = tk.Button(window, text="Add A New Search Word", command=add_search_word, height=2, width=20)
+    button3 = tk.Button(window, text="Remove A Search Word", command=remove_search_word, height=2, width=20)
     for widget in window.winfo_children():
         widget.pack_forget()
-    button.pack(padx=20, pady=(150, 0))
-    button2.pack(side=tk.LEFT, pady=(0, 600), padx=(290, 0))
-    button3.pack(side=tk.LEFT, pady=(0, 600), padx=(20, 0))
+    bold_font = tkFont.Font(family="Courier", size=30, weight="bold")
+    label_header = tk.Label(window, text="Key Word Search ", font=bold_font, bg="#78b9fa")
+    label_header.pack(padx=(30, 0), pady=(80, 10))
+    button.pack(padx=20, pady=(50, 0))
+    button2.pack(side=tk.LEFT,pady=(0, 220), padx=(250, 0))
+    button3.pack(side=tk.LEFT,pady=(0, 220), padx=(20, 0) )
 
 
 def remove_search_word():
+    entry = tk.Entry(window, width=35)
     for widget in window.winfo_children():
         widget.pack_forget()
     entry.pack(pady=(200, 15))
     button = tk.Button(window, text="Delete", command=delete,height=2,width=8)
     button.pack()
-    button4 = tk.Button(window, text="Back", command=menu,height=1,width=5)
-    button4.pack(side=tk.RIGHT, padx=50,pady=(0,300))
+    button1 = tk.Button(window, text="Back", command=menu,height=1,width=5)
+    button1.pack(side=tk.RIGHT, padx=50,pady=(0,100))
 
 
 def delete():
@@ -168,23 +169,17 @@ def delete():
     messagebox.showinfo("massage", "key word Deleted Succesfully")
 
 
-
-
-
 window = tk.Tk()
 bg_image = tk.PhotoImage(file=IMG_PATH)
-resized_image = bg_image.subsample(10, 10)
+resized_image = bg_image.subsample(14, 14)
 bg_label = tk.Label(window, image=resized_image,bg="#78b9fa")
-bg_label.place(relx=0.25, rely=0.4, relwidth=0.5, relheight=0.5)
-entry = tk.Entry(window,width=35)
-window.geometry("900x900")
+bg_label.place(relx=0.27, rely=0.6, relwidth=0.5, relheight=0.5)
+window.geometry("800x600")
 window.title("ErorrsFinder")
 window.configure(bg="#78b9fa")
 window.iconbitmap('./assetes/logo.ico')
-button = tk.Button(window, text="Start",command=show_labels,height=2,width=20)
-button2 = tk.Button(window, text="Add A New Search Word", command= add_search_word,height=2,width=20)
-button3 = tk.Button(window, text="Remove A Search Word", command= remove_search_word,height=2,width=20)
+window.pack_propagate(False)
+window.resizable(False, False)
 menu()
-
 window.mainloop()
 
